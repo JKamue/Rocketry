@@ -174,38 +174,31 @@ calculate_distances <- function(data) {
 track$Distance <- calculate_distances(track)
 track$Distance.Horizontal <- calculate_distances_no_altitude(track)
 
+# Smoothen for both vertical and horizontal
 track$Distance.Lowess <- lowess(track$Distance, f = 0.1)$y
 track$Distance.Horizontal.Lowess <- lowess(track$Distance.Horizontal, f = 0.1)$y
 
-ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
-  geom_line(aes(y = Distance.Lowess, color = "Speed LOWESS"), size = 1, linetype = "solid") +
-  geom_line(aes(y = Distance, color = "Speed"), size = 0.7)  +
-  #ylim(-15,60) +
-  
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed (inm/s)", color = NULL) +  # Add x-axis label as "Time"
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
-        legend.position = c(0.85, 0.1)) + # Adjust position inside plot 
-  labs(title = "Rocket total speed", 
-       subtitle = "Based on BE-220 GPS measurements",
-       caption = "Pathfinder launch 2024-09-29")
-
-
+# Calculate the total distances from the distance between each point
 track$Total.Distance <- cumsum(track$Distance)
 track$Total.Distance.Lowess <- cumsum(track$Distance.Lowess)
 track$Total.Distance.Horizontal <- cumsum(track$Distance.Horizontal)
 track$Total.Distance.Horizontal.Lowess <- cumsum(track$Distance.Horizontal.Lowess)
 
-
-
-
+# Derive speed from distance
 track$GPS_Baro_Total_Speed <- gradient(track$Total.Distance.Lowess, track$Seconds)
 track$GPS_Total_Horizontal_Speed <- gradient(track$Total.Distance.Horizontal.Lowess, track$Seconds)
 
-
-
 track$Altitude.Velocity.Lowess.Pracma.Abs <- abs(track$Altitude.Velocity.Lowess.Pracma)
-
 track$speed_deviation <- track$GPS_Baro_Total_Speed - track$Altitude.Velocity.Lowess.Pracma.Abs
 
+# Calculate altitude relative to start
+track$GPS_Altitude.Adjusted <- track$GPS_Altitude - min(track$GPS_Altitude)
+
+# Calculate GPS max altitude data
+max_alt_index_gps <- which.max(track$GPS_Altitude.Adjusted)
+max_alt_value_gps <- track$GPS_Altitude.Adjusted[max_alt_index_gps]
+max_seconds_gps <- track$Seconds[max_alt_index_gps] 
+
+# Delay adjust GPS
+gps_time_delay <- max_alt_index_gps - max_alt_index
+track$GPS_Altitude.Adjusted.NoDelay <- c(track$GPS_Altitude.Adjusted[(gps_time_delay+1):nrow(track)], rep(NA, gps_time_delay))

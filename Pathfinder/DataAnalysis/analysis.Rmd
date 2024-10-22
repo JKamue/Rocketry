@@ -112,7 +112,7 @@ ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
            color = "blue", vjust = 1.5, hjust = 2) +  # Adjusted to prevent leaving plot area
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +  
   scale_color_manual(values = c("Pressure" = "grey40", "Pressure LOWESS" = "red")) +
-  labs(x = "Time (s:ms)", y = "Elevation (in m)", color = NULL) +  # Add x-axis label as "Time"
+  labs(x = "Time (s:ms)", y = "Altitude (in m)", color = NULL) +  # Add x-axis label as "Time"
   scale_y_continuous(breaks = seq(0, max(track$Altitude, na.rm = TRUE), by = 25)) +  # Set y-axis breaks to steps of 25
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
@@ -180,13 +180,50 @@ ggplot(track, aes(x = Seconds)) +
 https://github.com/mikalhart/TinyGPSPlus/blob/0a205759da22a1c54c5f5285480fe6132592a4e2/examples/UsingCustomFields/UsingCustomFields.ino#L27
 No VDOP, interesting for altitude and most of the speed
 
+```{r gps-measured-speed, echo=FALSE, fig.cap="Total speed measured by GPS", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = GPS_Speed_ms, color = "Speed"), size = 0.7)  +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  
+        legend.position = c(0.85, 0.1)) + 
+  labs(title = "Rocket total speed", 
+       subtitle = "Based on BE-220 GPS measurements",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
+```{r gps-measured-altitude, echo=FALSE, fig.cap="Altitude measured by GPS", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
+  geom_line(aes(y = GPS_Altitude.Adjusted, color = "Altitude"), size = 0.7) +
+  
+  # Highlight the top-most point with a horizontal line to the y-axis
+  geom_segment(aes(x = min(Seconds), xend = max_seconds_gps, y = max_alt_value_gps, yend = max_alt_value_gps), 
+               linetype = "dashed", color = "blue", size = 0.3) +  # Dashed line to the y-axis
+  
+  geom_point(aes(x = max_seconds_gps, y = max_alt_value_gps), color = "blue", size = 2) +  # Highlight the max point with a dot
+  
+  # Add a label for the maximum point with adjusted positioning
+  annotate("text", x = max_seconds, y = max_alt_value_gps, label = paste("Max: ", max_alt_value_gps,"m ±1m", sep = ""), 
+           color = "blue", vjust = 1.5, hjust = 2) +  # Adjusted to prevent leaving plot area
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +  
+  labs(x = "Time (s:ms)", y = "Altitude (in m)", color = NULL) +  # Add x-axis label as "Time"
+  scale_y_continuous(breaks = seq(0, max(track$GPS_Altitude.Adjusted, na.rm = TRUE), by = 25)) +  # Set y-axis breaks to steps of 25
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
+        legend.position = c(0.75, 0.12)) + # Adjust position inside plot 
+  labs(title = "Altitude", 
+       subtitle = "Based on BE-220 GPS measurements",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
 ```{r gps-horizontal-distance, echo=FALSE, fig.cap="Horizontal distance of rocket based on GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
   geom_line(aes(y = Total.Distance.Horizontal.Lowess, color = "Distance Lowess"), size = 1, linetype = "solid") +
   geom_line(aes(y = Total.Distance.Horizontal, color = "Distance"), size = 0.7)  +
   scale_color_manual(values = c("Distance" = "grey40", "Distance Lowess" = "red")) +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Distance in m", color = NULL) + 
+  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = c(0.85, 0.1)) + 
@@ -200,7 +237,7 @@ ggplot(track, aes(x = Seconds)) +
 ggplot(track, aes(x = Seconds)) +  
   geom_line(aes(y = GPS_Total_Horizontal_Speed, color = "Horizontal Speed"), size = 0.7)  +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed in m/s", color = NULL) +  
+  labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) +  
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),  
         legend.position = c(0.85, 0.1)) + 
@@ -220,7 +257,7 @@ ggplot(data = track_unique, aes(x = GPS_Longitude, y = GPS_Latitude)) +
   scale_color_gradientn(colors = c("darkgreen", "olivedrab", "goldenrod", "darkgoldenrod", "red"),
                         limits = c(0, 140), 
                         oob = scales::squish,
-                        name = "Elevation") +  
+                        name = "Altitude") +  
   labs(x = "Longitude", y = "Latitude") +     
   theme_minimal() + 
   labs(title = "2D position of rocket", 
@@ -284,7 +321,7 @@ knitr::include_graphics(c("tmp/gps3d-1.png","tmp/gps3d-2.png"))
 
 ```{r gps-baro-distance, echo=FALSE, fig.cap="Total distance covered by rocket based on GPS and Barometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
-  geom_line(aes(y = Total.Distance.Lowess, color = "Distance LOWESS"), size = 1, linetype = "solid") +
+  geom_line(aes(y = Total.Distance.Lowess, color = "Distance LOWESS"), size = 0.7, linetype = "solid") +
   geom_line(aes(y = Total.Distance, color = "Distance"), size = 0.7)  +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
   labs(x = "Time (s:ms)", y = "Distance in m", color = NULL) + 
@@ -300,7 +337,7 @@ ggplot(track, aes(x = Seconds)) +
 ggplot(track, aes(x = Seconds)) + 
   geom_line(aes(y = GPS_Baro_Total_Speed, color = "Speed"), size = 0.7)  +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed (inm/s)", color = NULL) +  
+  labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) +  
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         legend.position = c(0.85, 0.1)) +
@@ -324,9 +361,30 @@ ggplot(track, aes(x = Seconds)) +
        caption = "Pathfinder launch 2024-09-29")
 ```
 
+```{r gps-baro-altitude-comparison, echo=FALSE, fig.cap="Comparison of GPS and barometer altitude measurements", warning=FALSE}
+ggplot(track, aes(x = Seconds)) + 
+  geom_line(aes(y = GPS_Altitude.Adjusted, color = "Altitude GPS (unsynced)"), size = 0.5, linetype = "solid") +
+  geom_line(aes(y = GPS_Altitude.Adjusted.NoDelay, color = "Altitude GPS (synced with peak)"), size = 0.7, linetype = "solid") +
+  geom_line(aes(y = Altitude, color = "Altitude pressure sensor"), size = 0.7)  +
+  geom_segment(aes(x = max_seconds, xend = max_seconds, y = max_alt_value_gps, yend = max_alt_value), 
+               linetype = "dashed", color = "black", size = 0.6) +  
+  geom_point(aes(x = max_seconds, y = max_alt_value_gps), color = "red", size = 2) +  
+  geom_point(aes(x = max_seconds, y = max_alt_value), color = "blue", size = 2) + 
+  annotate("text", x = max_seconds, y = max_alt_value + abs(max_alt_value_gps - max_alt_value) / 2, label = paste(abs(max_alt_value_gps - max_alt_value),"m", sep = ""), 
+           color = "black", vjust = 0.75, hjust = 1.2) +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = c(0.85, 0.1)) + 
+  labs(title = "Altitude measurement comparison", 
+       subtitle = "Based on BE-220 GPS and BMP388 measurements",
+       caption = "Pathfinder launch 2024-09-29")
+
+```
 
 
-## Failure Analysis - Parachute, SD-Card
+## Failure Analysis - Parachute, SD-Card, GPS VDOP and satellites
 
 \newpage
 
