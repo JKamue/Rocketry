@@ -159,7 +159,23 @@ ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
 
 ### Accelerometer
 
-```{r accel-accel, echo=FALSE, fig.cap="Vertical Acceleration as measured by the pressure sensor", warning=FALSE}
+```{r accel-raw, echo=FALSE, fig.cap="Raw Acceleration as measured by the Accelerometer", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = Acceleration_X, color = "Acceleration X"), size = 0.7)  +
+  geom_line(aes(y = Acceleration_Y, color = "Acceleration Y"), size = 0.7)  +
+  geom_line(aes(y = Acceleration_Z, color = "Acceleration Z"), size = 0.7)  +
+  
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Acceleration (in m/s²)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = c(0.85, 0.3)) +
+  labs(title = "Rocket raw acceleration", 
+       subtitle = "Based on MPU6050 acceleration measurements",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
+```{r accel-accel, echo=FALSE, fig.cap="Total Acceleration as measured by the Accelerometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
   geom_line(aes(y = Acceleration_Total, color = "Acceleration"), size = 0.7)  +
   ylim(-15,60) +
@@ -176,7 +192,23 @@ ggplot(track, aes(x = Seconds)) +
 
 ### Gyro
 
-```{r gyro-angle, echo=FALSE, fig.cap="Vertical Acceleration as measured by the pressure sensor", warning=FALSE}
+```{r gyro-raw, echo=FALSE, fig.cap="Rocket rotation during flight", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = Gyro_X, color = "Pitch"), size = 0.7)  +
+  geom_line(aes(y = Gyro_Y, color = "Roll"), size = 0.7)  +
+  geom_line(aes(y = Gyro_Z, color = "Yaw"), size = 0.7)  +
+  
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Speed (in rad/s)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = c(0.85, 0.1)) +
+  labs(title = "Rocket angular speed", 
+       subtitle = "Based on MPU6050 gyro measurements",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
+```{r gyro-angle, echo=FALSE, fig.cap="Rocket rotation during flight", warning=FALSE}
 arrow_data <- track %>%
   slice(seq(1, n(), by = 5)) %>%
   mutate(
@@ -199,9 +231,6 @@ ggplot(track, aes(x = Seconds)) +
   labs(title = "Rocket orientation", 
        subtitle = "Based on BMP388 pressure measurements and MPU6050 angle measurements",
        caption = "Pathfinder launch 2024-09-29")
-
-
-
 ```
 
 ### GPS
@@ -412,6 +441,29 @@ ggplot(track, aes(x = Seconds)) +
 
 ```
 
+```{r speed-roll, echo=FALSE, fig.cap="Correlation between speed and roll", warning=FALSE}
+
+scale_factor <- 4.5  
+
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = GPS_Baro_Total_Speed, color = "Rocket total speed"), size = 0.7) +
+  geom_line(aes(y = Gyro_Y * scale_factor, color = "Roll"), size = 0.7) +  
+  
+  scale_y_continuous(
+    name = "Speed (in m/s)",
+    sec.axis = sec_axis(~./scale_factor, name = "Gyro Y (in rad/s)") 
+  ) +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = c(0.85, 0.1)) +
+  labs(title = "Rocket angular speed", 
+       subtitle = paste("Correlation between roll and speed: ", 
+                        round(cor(track$GPS_Baro_Total_Speed, track$Gyro_Y),digits =3)),
+       caption = "Pathfinder launch 2024-09-29")
+
+```
 
 ## Failure Analysis - Parachute, SD-Card, GPS VDOP and satellites
 
