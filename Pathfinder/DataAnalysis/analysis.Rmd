@@ -238,6 +238,21 @@ ggplot(track, aes(x = Seconds)) +
 https://github.com/mikalhart/TinyGPSPlus/blob/0a205759da22a1c54c5f5285480fe6132592a4e2/examples/UsingCustomFields/UsingCustomFields.ino#L27
 No VDOP, interesting for altitude and most of the speed
 
+```{r gps-hdop, echo=FALSE, fig.cap="GPD horizontal dilution of precision", warning=FALSE}
+ggplot(track, aes(x = Seconds)) + 
+  geom_line(aes(y = GPS_HDOP, color = "GPS HDOP"), size = 0.7, linetype = "solid") +
+  scale_y_continuous(trans='log10') +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "HDOP", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = c(0.85, 0.05)) +
+  labs(title = "GPD horizontal dilution of precision", 
+       subtitle = "Based on BE-220 GPS, log y scale",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
+
 ```{r gps-measured-speed, echo=FALSE, fig.cap="Total speed measured by GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
   geom_line(aes(y = GPS_Speed_ms, color = "Speed"), size = 0.7)  +
