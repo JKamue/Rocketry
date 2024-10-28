@@ -82,33 +82,6 @@ track$GPS_Speed_ms <- track$GPS_Speed * 1000 / (60*60)
 track_unique <- track %>%
   distinct(GPS_Longitude, GPS_Latitude, .keep_all = TRUE)
 
-ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
-  geom_line(aes(y = GPS_HDOP, color = "Speed"), size = 0.7)  +
-  #ylim(-15,60) +
-  
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed (inm/s)", color = NULL) +  # Add x-axis label as "Time"
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
-        legend.position = c(0.85, 0.1)) + # Adjust position inside plot 
-  labs(title = "Rocket total speed", 
-       subtitle = "Based on BE-220 GPS measurements",
-       caption = "Pathfinder launch 2024-09-29")
-
-
-ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
-  geom_line(aes(y = GPS_Speed_ms, color = "Speed"), size = 0.7)  +
-  #ylim(-15,60) +
-  
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed (inm/s)", color = NULL) +  # Add x-axis label as "Time"
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),  # Rotate x-axis labels for readability
-        legend.position = c(0.85, 0.1)) + # Adjust position inside plot 
-  labs(title = "Rocket total speed", 
-       subtitle = "Based on BE-220 GPS measurements",
-       caption = "Pathfinder launch 2024-09-29")
-
 
 library(dplyr)
 library(geosphere)
@@ -202,3 +175,14 @@ max_seconds_gps <- track$Seconds[max_alt_index_gps]
 # Delay adjust GPS
 gps_time_delay <- max_alt_index_gps - max_alt_index
 track$GPS_Altitude.Adjusted.NoDelay <- c(track$GPS_Altitude.Adjusted[(gps_time_delay+1):nrow(track)], rep(NA, gps_time_delay))
+
+# Calculate orientation of rocket
+track <- track %>%
+  mutate(
+    angle_X = cumsum(Gyro_X * TimeDiff/1000),  
+    angle_Y = cumsum(Gyro_Y * TimeDiff/1000), 
+    angle_Z = cumsum(Gyro_Z * TimeDiff/1000)  
+  )
+
+# Rocket was at an angle on the pole and moving around
+track$angle_X = track$angle_X + 15 * (pi/180)
