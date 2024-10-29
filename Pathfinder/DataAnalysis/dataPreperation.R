@@ -167,6 +167,12 @@ track$speed_deviation <- track$GPS_Baro_Total_Speed - track$Altitude.Velocity.Lo
 # Calculate altitude relative to start
 track$GPS_Altitude.Adjusted <- track$GPS_Altitude - min(track$GPS_Altitude)
 
+# Calculate timeframe of high HDOP
+high_hdop <- track[track$GPS_HDOP > 10,]
+high_hdop_start <- min(high_hdop$Seconds)
+high_hdop_end <- max(high_hdop$Seconds)
+
+
 # Calculate GPS max altitude data
 max_alt_index_gps <- which.max(track$GPS_Altitude.Adjusted)
 max_alt_value_gps <- track$GPS_Altitude.Adjusted[max_alt_index_gps]

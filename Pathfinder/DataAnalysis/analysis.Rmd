@@ -255,6 +255,7 @@ ggplot(track, aes(x = Seconds)) +
 
 ```{r gps-measured-speed, echo=FALSE, fig.cap="Total speed measured by GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
+  geom_rect(aes(xmin = high_hdop_start, xmax = high_hdop_end, ymin = -Inf, ymax = Inf), fill="#ffa50001") +
   geom_line(aes(y = GPS_Speed_ms, color = "Speed"), size = 0.7)  +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
   labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) + 
@@ -292,6 +293,7 @@ ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
 
 ```{r gps-horizontal-distance, echo=FALSE, fig.cap="Horizontal distance of rocket based on GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
+  geom_rect(aes(xmin = high_hdop_start, xmax = high_hdop_end, ymin = -Inf, ymax = Inf), fill="#ffa50001") +
   geom_line(aes(y = Total.Distance.Horizontal.Lowess, color = "Distance Lowess"), size = 1, linetype = "solid") +
   geom_line(aes(y = Total.Distance.Horizontal, color = "Distance"), size = 0.7)  +
   scale_color_manual(values = c("Distance" = "grey40", "Distance Lowess" = "red")) +
