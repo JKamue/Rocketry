@@ -208,6 +208,23 @@ ggplot(track, aes(x = Seconds)) +
        caption = "Pathfinder launch 2024-09-29")
 ```
 
+```{r gyro-roll-range, echo=FALSE, fig.cap="Measured roll compared to maximum range", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = 500, color = "Roll Range Maximum"), size = 0.7, alpha=0.5)  +
+  geom_line(aes(y = Gyro_Y_deg, color = "Roll"), size = 0.7)  +
+  
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Speed (in degree/s)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = c(0.85, 0.1)) +
+  labs(title = "Rocket angular speed", 
+       subtitle = "Based on MPU6050 gyro measurements",
+       caption = "Pathfinder launch 2024-09-29")
+
+```
+
+
 ```{r gyro-angle, echo=FALSE, fig.cap="Rocket rotation during flight", warning=FALSE}
 arrow_data <- track %>%
   slice(seq(1, n(), by = 5)) %>%

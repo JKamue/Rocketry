@@ -192,3 +192,6 @@ track <- track %>%
 
 # Rocket was at an angle on the pole and moving around
 track$angle_X = track$angle_X + 15 * (pi/180)
+
+# Calculate own rotation in degrees
+track$Gyro_Y_deg <- track$Gyro_Y * 180 / pi
