@@ -195,3 +195,6 @@ track$angle_X = track$angle_X + 15 * (pi/180)
 
 # Calculate own rotation in degrees
 track$Gyro_Y_deg <- track$Gyro_Y * 180 / pi
+
+# Calculate amount of rotations
+track$angle_Y_rotations <- track$angle_Y / (2*pi)

@@ -218,10 +218,28 @@ ggplot(track, aes(x = Seconds)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
         legend.position = c(0.85, 0.1)) +
-  labs(title = "Rocket angular speed", 
+  labs(title = "Rocket roll compared to maximum", 
        subtitle = "Based on MPU6050 gyro measurements",
        caption = "Pathfinder launch 2024-09-29")
 
+```
+
+```{r gyro-rotations, echo=FALSE, fig.cap="Amount of rotations around roll axis", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = track$angle_Y_rotations, color = "Amount of roll rotations"), size = 0.7)  +
+  geom_point(aes(x = max(track$Seconds), y = max(track$angle_Y_rotations)), color = "blue", size = 2) +
+  geom_segment(aes(x = min(track$Seconds), xend = max(track$Seconds), y = max(track$angle_Y_rotations), yend = max(track$angle_Y_rotations)), 
+               linetype = "dashed", color = "blue", size = 0.3) +
+  annotate("text", x = max(track$Seconds), y = max(track$angle_Y_rotations), label = paste(round(max(track$angle_Y_rotations),1)," rotations in total", sep = ""), 
+          color = "blue", vjust = 1.5, hjust = 2) +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Count", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = c(0.85, 0.1)) +
+  labs(title = "Rocket angular speed", 
+       subtitle = "Based on MPU6050 gyro measurements",
+       caption = "Pathfinder launch 2024-09-29")
 ```
 
 
