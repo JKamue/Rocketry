@@ -198,3 +198,14 @@ track$Gyro_Y_deg <- track$Gyro_Y * 180 / pi
 
 # Calculate amount of rotations
 track$angle_Y_rotations <- track$angle_Y / (2*pi)
+
+# Load simulated data
+simulated_track <- csv_einlesen('pathfinder-simulated-launch')
+colnames(simulated_track) <- c("Seconds",
+                               "SimulatedAltitude",
+                               "SimulatedVerticalVelocity",
+                               "SimulatedVerticalAcceleration")
+
+simulated_track$Seconds_Rounded <- round(simulated_track$Seconds,4) + 1.2
+track$Seconds_Rounded <- round(track$Seconds,2)
+comparison <- inner_join(simulated_track, track, by = "Seconds_Rounded")
