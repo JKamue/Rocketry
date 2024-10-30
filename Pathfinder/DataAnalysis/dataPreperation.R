@@ -73,7 +73,7 @@ track$Altitude.Acceleration.Lowess.Pracma[1] <- 0
 
 # Summe Accerlation Gyro
 track$Acceleration_Total <- sqrt(track$Acceleration_X^2 + track$Acceleration_Y^2 + track$Acceleration_Z^2)
-track$Acceleration_Total <- track$Acceleration_Total - track$Acceleration_Total[1]
+#track$Acceleration_Total <- track$Acceleration_Total - track$Acceleration_Total[1]
 
 # Velocity from GPS
 track$GPS_Speed_ms <- track$GPS_Speed * 1000 / (60*60)
