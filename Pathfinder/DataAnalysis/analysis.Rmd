@@ -105,12 +105,12 @@ At the end the data of multiple sensors will be combined to get a more comprehen
 
 ### Pressure Sensor
 
-The primary function of the pressure sensor is to measure the rocket's altitude throughout its flight. 
+The primary function of the barometric pressure sensor is to measure the rocket's altitude throughout its flight. 
 With an accuracy of approximately ±8 Pa, it can determine altitude to within ±0.5 m \autocite{dfrobotGravityBMP388}.
 Since each point in the following figure represents the difference between the initial ground measurement and the reading at that specific moment, the cumulative accuracy adjusts to about ±1m — still providing a very reliable measurement.
 Additionally locally weighted scatterplot smoothing (LOWESS) has been used to plot an additional curve that is less susceptible to the minor variations in the sensors measurements.
 
-```{r pressure-alt, echo=FALSE, fig.cap="Altitude as measured by the pressure sensor", warning=FALSE}
+```{r pressure-alt, echo=FALSE, fig.cap="Altitude as measured by the barometric pressure sensor", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
   geom_line(aes(y = Altitude.Lowess, color = "Pressure LOWESS"), size = 1, linetype = "solid") +
   geom_line(aes(y = Altitude, color = "Pressure")) +
@@ -148,11 +148,11 @@ Perhaps future flights might also profit from redundant sensors.
 
 
 Using the altitude data, the gradient of altitude can be calculated to determine the rocket’s vertical speed.
-While the pressure recorded by the sensor might look smooth at a first glance it becomes apparent that the minimal variations in the sensors measurements result in huge spikes when calculating the gradient.
+While the barometric pressure recorded by the sensor might look smooth at a first glance it becomes apparent that the minimal variations in the sensors measurements result in huge spikes when calculating the gradient.
 Calculating the gradient of the altitiude LOWESS yields a lot better and cleaner results that should still be very accurate since it only reduces the variation and doesnt alter the curves trajectory.
 This graph shows that the maximum vertical speed was around 40 m/s.
 
-```{r pressure-speed, echo=FALSE, fig.cap="Vertical Speed as measured by the pressure sensor", warning=FALSE}
+```{r pressure-speed, echo=FALSE, fig.cap="Vertical Speed as measured by the barometric pressure sensor", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
   geom_line(aes(y = Altitude.Velocity.Lowess.Pracma, color = "Vertical speed based on altitude LOWESS"), size = 1, linetype = "solid") +
   geom_line(aes(y = Altitude.Velocity.Pracma, color = "Vertical speed based on measurements"))  +
@@ -172,7 +172,7 @@ Trying to calculate a gradient from either of the calculated vertical speeds yie
 In this case even the variations of the LOWESS are to significant to produce usable data.
 Perhaps calculating another LOWESS based on the Vertical speed LOWESS might produce nicer looking results but it is questionable how accurate those would still be.
 
-```{r pressure-accel, echo=FALSE, fig.cap="Vertical Acceleration as measured by the pressure sensor", warning=FALSE}
+```{r pressure-accel, echo=FALSE, fig.cap="Vertical Acceleration as measured by the barometric pressure sensor", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
   geom_line(aes(y = Altitude.Acceleration.Lowess.Pracma, color = "Acceleration LOWESS"), size = 1, linetype = "solid") +
   geom_line(aes(y = Altitude.Acceleration.Pracma, color = "Acceleration"))  +
@@ -189,13 +189,17 @@ ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
        caption = "Pathfinder launch 2024-09-29")
 ```
 
-The pressure sensor is the perfect sensor for determining the altitude during the flight accurately.
+The barometric pressure sensor is the perfect sensor for determining the altitude during the flight accurately.
 The high velocity of the rocket does not seem to have decreased the quality of measurements except perhaps the sudden decrease and increase shortly after or during the peak of the rocket.
 Variations in the individual measurements make it hard to calculate a gradient but using local regression it is possible to still determine the speed of the rocket during the launch.
 The variations seem to be to high to calculate the acceleration of the rocket though which is a bummer since it would have been interesting to compare the vertical acceleration measured by the pressure sensor and the accelerometer.
 
 
 ### Accelerometer
+
+The accelerometer recorded the acceleration of the rocket in 3 axis during the launch.
+The most interesting axis is the vertical axis labeled with Y in the graphic below.
+As expected the vertical acceleration matches the thrust curve of a D12-5 engine in shape and duration \autocite{estesD12} confirming the validity of measurements to some degree.
 
 ```{r accel-raw, echo=FALSE, fig.cap="Raw Acceleration as measured by the Accelerometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
@@ -213,6 +217,12 @@ ggplot(track, aes(x = Seconds)) +
        caption = "Pathfinder launch 2024-09-29")
 ```
 
+While the general shape of the thrust might look okay and follow expectations a closer inspection shows that the accelerometer data is actually flawed.
+During the period on the ground before lift-off there should have been a force of roughly 9.81 m/s² representing gravity.
+Instead the total acceleration on all axis before liftoff was only 4.87-4.91m/s².
+This seems to be pretty exactly half of the expected acceleration hinting at a scaling issue in either the library or the accelerometers scale factor that is calibrated at the factory.
+Simply multiplying measured values by two yielded unsatisfactory results and it is very likely that poor understanding and integration of this sensor ahead of flight made the data unusable.
+
 ```{r accel-accel, echo=FALSE, fig.cap="Total Acceleration as measured by the Accelerometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
   geom_line(aes(y = Acceleration_Total, color = "Acceleration"), size = 0.7)  +
@@ -227,6 +237,10 @@ ggplot(track, aes(x = Seconds)) +
        subtitle = "Based on MPU6050 acceleration measurements",
        caption = "Pathfinder launch 2024-09-29")
 ```
+
+Further flights must take a closer look at the accelerometer before launching, particularly ensuring that the expected acceleration of gravity is present before launch for the collected data to be trustworthy.
+Also settings like the accelerometer range and filter bandwidth as well as other settings must be better understood before taking flight.
+It might also make sense to compare multiple different libraries or reading the sensor directly to get all the raw data that can be processed after and not during the flight.
 
 ### Gyro
 
