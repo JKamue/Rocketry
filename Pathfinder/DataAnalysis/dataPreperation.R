@@ -199,6 +199,9 @@ track$Gyro_Y_deg <- track$Gyro_Y * 180 / pi
 # Calculate amount of rotations
 track$angle_Y_rotations <- track$angle_Y / (2*pi)
 
+# Calculate timeframe of rotating
+rotation_duration <- max(track$Seconds) - min(track[abs(track$angle_Y_rotations) > 0.1,]$Seconds)
+
 # Load simulated data
 simulated_track <- csv_einlesen('pathfinder-simulated-launch')
 colnames(simulated_track) <- c("Seconds",
