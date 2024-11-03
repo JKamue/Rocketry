@@ -38,6 +38,8 @@ colnames(track) <- c("Milliseconds",
                           "GPS_Speed",
                           "GPS_Time")
 
+track_initial <- track
+
 ## Add relevant features and information
 
 # Convert track time

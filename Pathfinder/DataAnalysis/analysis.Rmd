@@ -75,22 +75,43 @@ Therefore the rocket can not only be replicated with low complexity for the buil
 Additionally the process of 3D printing allows to easily build geometries that would usually be hard or expensive to machine or produce at small production volumes and scales \autocite{berman20123, berman2020managing}.
 Specifically FDM 3D printing was used to build the complete Rocket structure.
 
-### Selected Materials
-
 Different 3D printing filaments offer different strength or density properties that might be more beneficial to use on different parts of the rocket \autocite{bambu_filament_guide_2024}. The most used hobbyist Filament, PLA, is an all rounder, offering good toughness, strength, stiffness, layer adhesion and ease of printing for a low price per kilogram. For this reason, PLA was chosen as the default material for most parts of the rocket that aren't subjected to high forces or extreme temperatures. 
 
 The option of printing certain components in more expensive, ultra-lightweight filaments like ASA Aero (ASA infused with a temperature-activated foaming agent) was considered. However, this approach was ultimately set aside due to the reduced strength and increased printing complexity, which limits the ability to create intricate designs to some extent.
 
+### Selected Materials
+
 There are 2 parts on the rocket that required further consideration before selecting the filament:
 \begin{enumerate}
-  \item The fins of a rocket are often quite thin and stick out of the rocket body often making contact first when impacting during soft landings or transportation. Therefore the 
-  \item asdf asdfasd fasdfas d.asdf asdfa dafsdfasdfa sdfa.sdf asdfasd fasdfasdfas df.asdf asdfas df  adsfasdfasd. adsfasdf asdf asdf asdf asdfa.afsdf asdfas dfasdf asdf asd f.
+  \item The fins of a rocket are often quite thin and stick out of the rocket body often making contact first when impacting during soft landings or transportation. Therefore requiring a higher impact resistance.
+  \item The parts coming into contact with the rocket motor will heat up more and should be made out of a material capable of handling higher temperatures than PLA.
 \end{enumerate}
 
+Therefore these 2 parts were printed together in PA6-CF which features both a high impact and temperature resistance.
+The other parts of the rocket were all printed in cheap, easy to use PLA.
 
+### Parts
+
+The rocket consists of 6 components.
+
+![Rocket components and assembly](rocket.png)
+
+The fins and motor assembly is split in two halves and screws into the white flight computer assembly.
+This allows mounting motors of different sizes by using various sized adapter before closing the motor assembly and screwing it in.
+The red tube is just a cover with holders for the launch rods as well as openings for LEDs and sensors.
+The detachable nosecone is placed on top of the tube.
+A small thin disk is placed on top of the flight recorder to create a small parachute compartment.
 
 ## Performance & Stability Simulations
+
+The whole rocket with all parts and weights was replicated in OpenRocket to predict the stability and flight characteristics.
+Later on the actual data will be compared with the simulated data.
+
+![Simulated rocket](rocket-simulation.png)
+
 ## Flight Recording System
+
+
 
 \newpage
 
@@ -99,6 +120,8 @@ There are 2 parts on the rocket that required further consideration before selec
 In this chapter I will first analyse the launch based on the data the various sensors recorded.
 Following that I will compare the actual measurements with the result of the simulation.
 This chapter concludes with a failure analysis that summarizes all encountered issues and investigates their root causes, aiming to prevent similar and related failures in the future.
+
+The launch was conducted with a D12-5 motor.
 
 ## Data Analysis
 
@@ -457,7 +480,7 @@ Additionally there was a sudden jump in gps positions decreasing the quality of 
 For future launches it should be checked if there are setting to decrease jumps or the delay.
 
 
-## Combining measurements
+### Combining measurements
 
 The previous chapters only looked at the data measured by individual sensors.
 The goal of this chapter is to explore if combining and enhancing data collected by different sensors will result in new insights.
@@ -693,20 +716,22 @@ ggplot(comparison, aes(x = Seconds.y)) +
 
 \newpage
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+# Appendix
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+## Raw barometric pressure sensor data
+```{r echo=FALSE}
+knitr::kable(track_initial[,1:4], format="markdown")
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE, dpi=500, fig.cap="This is my plot"}
-plot(pressure)
+\newpage
+## Raw gyro data
+```{r echo=FALSE}
+knitr::kable(track_initial[,c(1, 5:10)], format="markdown")
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot  
+\newpage
+## Raw gps data
+```{r echo=FALSE}
+gps_data <- track_initial[,c(1, 11:18 )]
+colnames(gps_data) <- gsub("GPS_", "", colnames(gps_data))
+knitr::kable(gps_data, format="markdown")
+```
+\newpage
