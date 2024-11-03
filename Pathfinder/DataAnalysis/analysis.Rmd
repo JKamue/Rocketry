@@ -319,8 +319,13 @@ This resulted in the choice for an insufficient measurement range leading to the
 
 ### GPS
 
-https://github.com/mikalhart/TinyGPSPlus/blob/0a205759da22a1c54c5f5285480fe6132592a4e2/examples/UsingCustomFields/UsingCustomFields.ino#L27
-No VDOP, interesting for altitude and most of the speed
+An error in the flight recorder software caused it not to record the amount of visible satellites during the launch.
+This would have been interesting data to have to compare signal accuracy with different numbers of satellites.
+Additionally only the horizontal dilution of precision (HDOP) was tracked since the used library did not include the vertical dilution of precision (VDOP) by default.
+In hindsight this data would still have been relevant and should be recorded for future launches.
+
+The chart below shows the HDOP during the flight on a logarithmic scale.
+The `r high_hdop_end-high_hdop_start`s period with a very high HDOP is noticeable and will also be highlighted in following graphics that might require horizontal precision.
 
 ```{r gps-hdop, echo=FALSE, fig.cap="GPS horizontal dilution of precision", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
@@ -336,6 +341,8 @@ ggplot(track, aes(x = Seconds)) +
        caption = "Pathfinder launch 2024-09-29")
 ```
 
+The total speed of the rocket as tracked by the gps is very inaccurate with big jumps and does not match the actual flight path or the data obtained by the barometric pressure sensor a lot.
+The brief period with high HDOP seems to have no influence on the tracked speed.
 
 ```{r gps-measured-speed, echo=FALSE, fig.cap="Total speed measured by GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
@@ -350,6 +357,9 @@ ggplot(track, aes(x = Seconds)) +
        subtitle = "Based on BE-220 GPS measurements",
        caption = "Pathfinder launch 2024-09-29")
 ```
+
+The altitude data recorded by the gps seems to have a very strong delay.
+It first measured a noticeable ascent of the rocket 5 seconds after the actual launch.
 
 ```{r gps-measured-altitude, echo=FALSE, fig.cap="Altitude measured by GPS", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
@@ -375,35 +385,11 @@ ggplot(track, aes(x = Seconds)) +  # Map the converted seconds to the x-axis
        caption = "Pathfinder launch 2024-09-29")
 ```
 
-```{r gps-horizontal-distance, echo=FALSE, fig.cap="Horizontal distance of rocket based on GPS", warning=FALSE}
-ggplot(track, aes(x = Seconds)) + 
-  geom_rect(aes(xmin = high_hdop_start, xmax = high_hdop_end, ymin = -Inf, ymax = Inf), fill="#ffa50001") +
-  geom_line(aes(y = Total.Distance.Horizontal.Lowess, color = "Distance Lowess"), size = 1, linetype = "solid") +
-  geom_line(aes(y = Total.Distance.Horizontal, color = "Distance"), size = 0.7)  +
-  scale_color_manual(values = c("Distance" = "grey40", "Distance Lowess" = "red")) +
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = c(0.85, 0.1)) + 
-  labs(title = "Horizontal Distance", 
-       subtitle = "Based on BE-220 GPS",
-       caption = "Pathfinder launch 2024-09-29")
-
-```
-
-```{r gps-horizontal-speed, echo=FALSE, fig.cap="Horizontal speed of rocket based on GPS", warning=FALSE}
-ggplot(track, aes(x = Seconds)) +  
-  geom_line(aes(y = GPS_Total_Horizontal_Speed, color = "Horizontal Speed"), size = 0.7)  +
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) +  
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1),  
-        legend.position = c(0.85, 0.1)) + 
-  labs(title = "Horizontal Speed", 
-       subtitle = "Based on BE-220 GPS",
-       caption = "Pathfinder launch 2024-09-29")
-```
+The most interesting data recorded by the GPS is most likely the 2D position of the rocket.
+No other sensor on the rocket was capable of measuring the data.
+The following chart shows the path of the rocket as seen from above.
+This also shows that there was quite a big jump in the recorded gps data.
+It is unlikely that the rocket actually flew exactly this path.
 
 
 ```{r gps-2d, echo=FALSE, fig.cap="2D position of rocket based on GPS", warning=FALSE}
@@ -426,6 +412,87 @@ ggplot(data = track_unique, aes(x = GPS_Longitude, y = GPS_Latitude)) +
 
 ```
 
+Calculating the horizontal distance covered by the rocket based on the individual gps 2D positions yields the grey curve.
+Using the lowess it is possible to exclude the sudden jump caused by the gps mid-flight.
+Using the previous chart and this one it becomes apparent that the rocket covered a lot more horizontal ground during ascent than descent.
+
+
+```{r gps-horizontal-distance, echo=FALSE, fig.cap="Horizontal distance of rocket based on GPS", warning=FALSE}
+ggplot(track, aes(x = Seconds)) + 
+  geom_rect(aes(xmin = high_hdop_start, xmax = high_hdop_end, ymin = -Inf, ymax = Inf), fill="#ffa50001") +
+  geom_line(aes(y = Total.Distance.Horizontal.Lowess, color = "Distance Lowess"), size = 1, linetype = "solid") +
+  geom_line(aes(y = Total.Distance.Horizontal, color = "Distance"), size = 0.7)  +
+  scale_color_manual(values = c("Distance" = "grey40", "Distance Lowess" = "red")) +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = c(0.85, 0.1)) + 
+  labs(title = "Horizontal Distance", 
+       subtitle = "Based on BE-220 GPS",
+       caption = "Pathfinder launch 2024-09-29")
+
+```
+
+Using the gradient to calculate the horizontal speed also highlights the previous conclusion.
+Although this once again highlights that calculating the gradient of even LOWESS smoothened only approximates the real speed with a high variance.
+
+```{r gps-horizontal-speed, echo=FALSE, fig.cap="Horizontal speed of rocket based on GPS", warning=FALSE}
+ggplot(track, aes(x = Seconds)) +  
+  geom_line(aes(y = GPS_Total_Horizontal_Speed, color = "Horizontal Speed"), size = 0.7)  +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) +  
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),  
+        legend.position = c(0.85, 0.1)) + 
+  labs(title = "Horizontal Speed", 
+       subtitle = "Based on BE-220 GPS",
+       caption = "Pathfinder launch 2024-09-29")
+```
+
+Overall the gps measured some unique data like the absolute position of the rocket and the 2D track of the rocket.
+Altitude and speed measurements seem to be inaccurate though and the gps seems to have quite a high delay at times.
+The 2D position of the rocket often was redundant with multiple measurements having the same coordinates.
+Additionally there was a sudden jump in gps positions decreasing the quality of the data a lot.
+For future launches it should be checked if there are setting to decrease jumps or the delay.
+
+
+## Combining measurements
+
+The previous chapters only looked at the data measured by individual sensors.
+The goal of this chapter is to explore if combining and enhancing data collected by different sensors will result in new insights.
+This also makes it possible to compare the quality of data recorded by different sensors.
+
+Gps and barometric pressure sensor are both capable of measuring the rockets altitude during the flight.
+The following graphic shows the altitude measured by the GPS in green and the barometric altitude in blue.
+It is obvious that the gps data contains a lot more jumps and it seems to be delayed by quite a bit.
+The red line syncs barometric pressure and gps at their respective peaks.
+While peak measured by the gps is only off by 13.13 ±1m the data overall doesnt describe the ascent of the rocket very well.
+Moving forward the altitude measured by the barometric pressure sensor will be used when determining the altitude of the rocket.
+
+```{r gps-baro-altitude-comparison, echo=FALSE, fig.cap="Comparison of GPS and barometer altitude measurements", warning=FALSE}
+ggplot(track, aes(x = Seconds)) + 
+  geom_line(aes(y = GPS_Altitude.Adjusted, color = "Altitude GPS (unsynced)"), size = 0.5, linetype = "solid") +
+  geom_line(aes(y = GPS_Altitude.Adjusted.NoDelay, color = "Altitude GPS (synced with peak)"), size = 0.7, linetype = "solid") +
+  geom_line(aes(y = Altitude, color = "Altitude pressure sensor"), size = 0.7)  +
+  geom_segment(aes(x = max_seconds, xend = max_seconds, y = max_alt_value_gps, yend = max_alt_value), 
+               linetype = "dashed", color = "black", size = 0.6) +  
+  geom_point(aes(x = max_seconds, y = max_alt_value_gps), color = "red", size = 2) +  
+  geom_point(aes(x = max_seconds, y = max_alt_value), color = "blue", size = 2) + 
+  annotate("text", x = max_seconds, y = max_alt_value + abs(max_alt_value_gps - max_alt_value) / 2, label = paste(abs(max_alt_value_gps - max_alt_value),"m", sep = ""), 
+           color = "black", vjust = 0.75, hjust = 1.2) +
+  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
+  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
+        legend.position = c(0.85, 0.1)) + 
+  labs(title = "Altitude measurement comparison", 
+       subtitle = "Based on BE-220 GPS and BMP388 measurements",
+       caption = "Pathfinder launch 2024-09-29")
+
+```
+
+Using the altitude measured by the pressure sensor and the 2D position measured by the gps makes it possible to approximate the flight path of the rocket in 3D.
 
 ```{r gps-baro-3d, echo=FALSE, fig.cap="3D position of rocket based on GPS and Barometer data", warning=FALSE, fig.show='hold',fig.align='center', out.height="35%"}
 chart <- plot_ly(track_unique, 
@@ -477,6 +544,7 @@ discard <- webshot2::webshot("tmp/gps3d-2.html", file = "tmp/gps3d-2.png", vwidt
 knitr::include_graphics(c("tmp/gps3d-1.png","tmp/gps3d-2.png"))
 ```
 
+Based on this 3D flight path it is possible to calculate the total distance covered by the rocket.
 
 ```{r gps-baro-distance, echo=FALSE, fig.cap="Total distance covered by rocket based on GPS and Barometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
@@ -491,6 +559,10 @@ ggplot(track, aes(x = Seconds)) +
        subtitle = "Based on BE-220 GPS and BMP388 pressure measurements",
        caption = "Pathfinder launch 2024-09-29")
 ```
+
+And by calculating the gradient of that the total speed of the rocket can be calculated.
+Previous speed measurements were mostly horizontal or vertical speed, making this chart as the rockets true speed quite interesting.
+This shows how combining gps and barometric data can result in a new understanding of the rocket during flight.
 
 ```{r gps-baro-speed, echo=FALSE, fig.cap="Total speed of rocket based on GPS and Barometer", warning=FALSE}
 ggplot(track, aes(x = Seconds)) + 
@@ -508,8 +580,8 @@ ggplot(track, aes(x = Seconds)) +
 
 ```{r gps-baro-speed-overlay, echo=FALSE, fig.cap="Total speed of rocket compared to vertical speed", warning=FALSE}
 ggplot(track, aes(x = Seconds)) +  
-  geom_line(aes(y = GPS_Baro_Total_Speed, color = "Total Vertical Speed (pressure + gps)"), size = 0.7)  +
-  geom_line(aes(y = Altitude.Velocity.Lowess.Pracma.Abs, color = "Total Speed (pressure only)"), size = 0.7)  +
+  geom_line(aes(y = GPS_Baro_Total_Speed, color = "Total speed (pressure + gps)"), size = 0.7)  +
+  geom_line(aes(y = Altitude.Velocity.Lowess.Pracma.Abs, color = "Total vertical speed (pressure only)"), size = 0.7)  +
   scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
   labs(x = "Time (s:ms)", y = "Speed (in m/s)", color = NULL) + 
   theme_minimal() +
@@ -520,27 +592,13 @@ ggplot(track, aes(x = Seconds)) +
        caption = "Pathfinder launch 2024-09-29")
 ```
 
-```{r gps-baro-altitude-comparison, echo=FALSE, fig.cap="Comparison of GPS and barometer altitude measurements", warning=FALSE}
-ggplot(track, aes(x = Seconds)) + 
-  geom_line(aes(y = GPS_Altitude.Adjusted, color = "Altitude GPS (unsynced)"), size = 0.5, linetype = "solid") +
-  geom_line(aes(y = GPS_Altitude.Adjusted.NoDelay, color = "Altitude GPS (synced with peak)"), size = 0.7, linetype = "solid") +
-  geom_line(aes(y = Altitude, color = "Altitude pressure sensor"), size = 0.7)  +
-  geom_segment(aes(x = max_seconds, xend = max_seconds, y = max_alt_value_gps, yend = max_alt_value), 
-               linetype = "dashed", color = "black", size = 0.6) +  
-  geom_point(aes(x = max_seconds, y = max_alt_value_gps), color = "red", size = 2) +  
-  geom_point(aes(x = max_seconds, y = max_alt_value), color = "blue", size = 2) + 
-  annotate("text", x = max_seconds, y = max_alt_value + abs(max_alt_value_gps - max_alt_value) / 2, label = paste(abs(max_alt_value_gps - max_alt_value),"m", sep = ""), 
-           color = "black", vjust = 0.75, hjust = 1.2) +
-  scale_x_continuous(breaks = pretty(track$Seconds, n = 10), labels = seconds_milliseconds) +
-  labs(x = "Time (s:ms)", y = "Distance (in m)", color = NULL) + 
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1), 
-        legend.position = c(0.85, 0.1)) + 
-  labs(title = "Altitude measurement comparison", 
-       subtitle = "Based on BE-220 GPS and BMP388 measurements",
-       caption = "Pathfinder launch 2024-09-29")
+Using the data of multiple sensors can also explain the nature of the high roll rate mentioned earlier.
+The total speed calculated above and the roll rate have a correlation of `r round(cor(track$GPS_Baro_Total_Speed, track$Gyro_Y),digits =3)`.
+Therefore they are strongly correlated.
+The chart below uses two different scales with a scale factor to highlight this relationship.
+This data points to an asymmetric geometry of the rocket causing uneven drag at high speeds.
+Most likely this is due to the fins not aligning perfectly and being at a slight angle.
 
-```
 
 ```{r speed-roll, echo=FALSE, fig.cap="Correlation between speed and roll", warning=FALSE}
 
@@ -566,6 +624,8 @@ ggplot(track, aes(x = Seconds)) +
 
 ```
 
+The rockets orientation during the flight can also be displayed by using the barometric pressure sensors altitude and the rockets orientation measured by the gyro sensor.
+It is important to note that the x-axis here does not track distance but time.
 
 ```{r gyro-angle, echo=FALSE, fig.cap="Rocket rotation during flight", warning=FALSE}
 arrow_data <- track %>%
