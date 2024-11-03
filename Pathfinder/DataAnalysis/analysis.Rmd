@@ -50,9 +50,11 @@ source("dataPreperation.R")
 
 # Goals
 
-3D printed
-Fit multiple motors
-Record as much flight data as possible for "cheap"
+\begin{enumerate}
+  \item The rocket should be easy and cheap to build. It should be possible to build multiple rockets of the same type and losing some of them should not hurt financially.
+  \item The rocket should be able to handle a variety of different motor sizes. Ideally a launch campaign would start at small altitudes and work its way up.
+  \item During the flight the rocket should be capable of recording as much flight data as possible and store it to be analyzed later.
+\end{enumerate}
 
 \newpage
 
@@ -98,9 +100,15 @@ The rocket consists of 6 components.
 
 The fins and motor assembly is split in two halves and screws into the white flight computer assembly.
 This allows mounting motors of different sizes by using various sized adapter before closing the motor assembly and screwing it in.
+
 The red tube is just a cover with holders for the launch rods as well as openings for LEDs and sensors.
 The detachable nosecone is placed on top of the tube.
 A small thin disk is placed on top of the flight recorder to create a small parachute compartment.
+On top of the parachute compartment a nose cone is placed loosely.
+
+The flight computer assembly is built around a hollow tube that starts at the motor assembly. 
+This directs the blast upwards to the parachute compartment.
+The blast will push the parachute against the nose cone, separating it from the rocket and opening up the parachute.
 
 ## Performance & Stability Simulations
 
@@ -111,6 +119,21 @@ Later on the actual data will be compared with the simulated data.
 
 ## Flight Recording System
 
+The goal of the flight recording system was to cheaply record as much data as possible.
+The heart of the system was a Lolin32.
+The WiFi capability allowed connecting to the flight recording system on the launch pad to ensure that all sensors were working.
+Additionally it supports charging and using a small 3.7v LiPo battery which was used to power the rocket during flight.
+
+To store the recorded data a cheap SPI micro SD module was used.
+
+3 types of sensors were added to the flight recording system.
+All of them are widely available and cheap making them ideal to build multiple flight recorders in the future without being afraid of losing some.
+
+\begin{enumerate}
+  \item For measuring barometric pressure the BMP388 was chosen. This sensor should be able to provide the most accurate altitude data.
+  \item To measure the rockets acceleration and orientation the MPU6050 was chosen as an IMU.
+  \item In order to get the precise location of the rocket above the ground the BE-220 was used as a GPS. The GPS was also re-programmed to allow for a higher data rate.
+\end{enumerate}
 
 
 \newpage
@@ -677,6 +700,9 @@ ggplot(track, aes(x = Seconds)) +
 
 ## Comparison with simulation
 
+Weirdly enough the data recorded does not match the simulations at all.
+The achieved altitude was a lot lower than the simulated altitude.
+
 ```{r simulation-altitude, echo=FALSE, fig.cap="Simulated altitude compared with measured altitude", warning=FALSE}
 ggplot(comparison, aes(x = Seconds.y)) +  
   geom_line(aes(y = SimulatedAltitude, color = "Simulated Altitude"), size = 0.7) +
@@ -690,6 +716,10 @@ ggplot(comparison, aes(x = Seconds.y)) +
        subtitle = "Based on BMP388 pressure measurements and simulation",
        caption = "Pathfinder launch 2024-09-29")
 ```
+
+Comparing the thrust of the simulation with the actual thrust shows that the simulated D12 engine behaved a lot differently than the real one.
+It burned longer and most likely with a lot less thrust resulting in the reduced altitude.
+Even increasing the weight or friction of the rocket will not result in such big differences in acceleration and the burn time should have been the same either way.
 
 ```{r simulation-acceleration, echo=FALSE, fig.cap="Simulated vertical acceleration compared with measured acceleration", warning=FALSE}
 ggplot(comparison, aes(x = Seconds.y)) +  
@@ -706,13 +736,73 @@ ggplot(comparison, aes(x = Seconds.y)) +
 
 ```
 
-## Failure Analysis - Parachute, SD-Card, GPS VDOP and satellites
+For future launches the simulation software has to be better understood and the root cause of this large difference has to be identified.
+Otherwise judging the altitude and trajectory of the rocket prior to launch will not be possible.
+
+## Failure Analysis
+
+The parachute compartment of the rocket was way to small to fit a properly sized parachute.
+During the design phase there was no parachute on hand resulting in very rough and very wrong estimations.
+This is why integrating a properly sized parachute was impossible.
+Even a smaller parachute barely fit, had to be folded incorrectly and was cramped into the available space.
+Ultimately cramping the parachute in was the reason it jammed and failed to deploy.
+
+The parachute was once tested successfully on the ground using an A motor.
+In theory the system with a hollow inner tube directing the ejection charge to the nozzle works.
+Most likely the only thing needed to fix the parachute system is a longer rocket.
 
 \newpage
 
 # Conclusion
 ## Critical Reflection
+
+### Mistakes 
+
+In hindsight multiple mistakes in the rockets design and launch are obvious.
+
+#### Insufficient understanding of sensors
+
+In multiple occasions and for multiple different sensors there was not enough planning concerning the calibration and settings used.
+
+This was especially noticeable with the IMU.
+The accelerometer was not studied in detail before the launch resulting in unusable data.
+For the gyroscope the expected data range was not correctly set resulting in some data loss concerning the rockets roll.
+
+The gps had an error where it only wrote 0 for the amount of available satellites onto the SD card.
+Additionally the data included large jumps during the launch that may have been prevented with proper settings.
+Due to bad research valuable data like VDOP was not known before the launch and not recorded during the flight.
+
+#### Bad planning
+
+The parachute compartment was way to small.
+The design and manufacturing techniques used would have easily allowed for a larger parachute area.
+But during the design the parachute was the only part that was not on hand and not measured out to test with the overall build.
+This eventually lead to the rocket crashing.
+
+Additionally the simulation did not match the actual flight characteristics but this has to be looked into further.
+
+### Successes
+
+Even though the rocket crashed recovering it was never a main goal.
+Recovering the data itself can already be considered a success and provided valuable insight into the flight.
+It was possible to prove that 3D printed rockets are not only cheap to produce but also make creating complex geometries easy.
+Additionally the viability of different sensors could be proven and the lessons learned from bad sensor readings will be applied on future flights.
+
+Overall I do not deem this launch a failure since all the initial goals were achieved.
+Recovering the rocket intact would have been nice though.
+
 ## Next steps
+
+I would like to have these features on future rockets (ordered by decreasing importance):
+
+\begin{enumerate}
+  \item Fixing all outlined sensor issues
+  \item A working parachute system
+  \item A built in camera filming the rockets POV during the flight
+  \item The ability for the rocket to launch itself allowing the flight recorder to know the precise time the engine was lit
+  \item Custom made PCBs instead of soldered together sensor modules
+  \item A recovery system where the rocket can transmit its location after landing
+\end{enumerate}
 
 \newpage
 
