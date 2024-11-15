@@ -3,6 +3,12 @@
 
 This serves as a common repository where I will document all my rocket builds and share as well as analyze the data generated from launching them.
 
+<p align="center">
+  <img src="Pathfinder/DataAnalysis/title-picture.jpeg" width="40%" />
+</p>
+
+
+
 ## Rockets
 
 ### Pathfinder
