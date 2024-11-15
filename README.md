@@ -19,7 +19,7 @@ The goal of pathfinder was to test the viability of 3D printed rocket parts and 
 #### Launches
 
 
-| Date | Outcome | Comment |
-|--|--|--|
-| 2024-09-29 17:39 | Partial failure | Destruction on impact when parachutes failed but full launch data was recorded and recovered |
+| Date | Outcome | Comment | Docs |
+|--|--|--|--|
+| 2024-09-29 17:39 | Partial failure | Destruction on impact when parachutes failed but full launch data was recorded and recovered | [Report](https://github.com/JKamue/Rocketry/releases/download/pathfinder/pathfinder.pdf) |
 
